@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<spark:DefaultItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						   xmlns:s="library://ns.adobe.com/flex/spark" 
+						   xmlns:mx="library://ns.adobe.com/flex/halo" 
+						   xmlns:spark="spark.skins.spark.*"
+						   mouseChildren="false" 
+						   dataChange="dataChangeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.airgit.model.FileStatus;
+			
+			import mx.events.FlexEvent;
+			/*public function set data(item:Object):void {
+				super.data = item;
+			}*/
+
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				var status:FileStatus = data as FileStatus;
+				if(status.status == FileStatus.UNTRACKED){
+					contentBackgroundColor = 0xFFCCCC;
+				}else if(status.status == FileStatus.MODIFIED){
+					contentBackgroundColor = 0xCCFFCC;
+				}else{
+					contentBackgroundColor = 0xCCCCFF;
+				}
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</spark:DefaultItemRenderer>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
+					   xmlns:mx="library://ns.adobe.com/flex/halo"
+					   width="480"
+					   height="360"
+					   applicationComplete="startApp(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.airgit.model.ProjectModel;
+			import com.airgit.model.cache.RecentlyOpened;
+			import com.airgit.util.Git;
+			import com.airgit.view.window.ProjectWindow;
+			
+			import flash.events.Event;
+			import flash.events.MouseEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			import spark.events.IndexChangeEvent;
+			
+			[Bindable]
+			private var recentlyOpened:ArrayCollection;
+			private var repository:File;
+
+			protected function startApp(event:FlexEvent):void {
+				recentlyOpened = RecentlyOpened.getRecentDirectories();
+			}
+
+			protected function browse(event:MouseEvent):void
+			{
+				var directory:File = File.documentsDirectory;
+				
+				try{
+					directory.browseForDirectory("Select Directory");
+					directory.addEventListener(Event.SELECT, directorySelected);
+				}catch (error:Error){
+					trace("Failed:", error.message);
+				}
+				
+				function directorySelected(event:Event):void {
+					loadRepository(event.target as File);
+				}
+
+			}
+			protected function getLabel(item:Object):String {
+				var dir:File = item as File;
+				return dir.nativePath+"/";
+			}
+			protected function selectRepository(event:IndexChangeEvent):void {
+				if(event.newIndex == -1){
+					return;
+				}
+				repository = recentlyOpened.getItemAt( event.newIndex ) as File;
+			}
+			protected function loadRepository(dir:File):void {
+				RecentlyOpened.addRecentDirectory(dir);
+				var g:Git = new Git(dir.nativePath+"/");
+				g.addEventListener(Event.COMPLETE, traceResults);
+				g.execute("status");
+			}
+			private function traceResults(evt:Event):void {
+				var g:Git = evt.target as Git;
+				var model:ProjectModel = new ProjectModel();
+				model.repositoryDirectory = repository;
+				model.console += "git status\n";
+				model.console += g.response;
+				var project:ProjectWindow = new ProjectWindow();
+				project.model = model;
+				project.width = 800;
+				project.height = 600;
+				project.open();
+				visible = false;
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Button x="63" y="302" label="Browse" click="browse(event)"/>
+	<mx:HRule x="12" y="261" width="458" height="13"/>
+	<s:Label x="172" y="9" text="Open a recent git repository..."/>
+	<s:Label x="31" y="282" text="Open existing git repository"/>
+	<s:Button x="346" y="302" label="Create" enabled="false"/>
+	<s:Label x="314" y="282" text="Create a new git repository"/>
+	<s:List x="10" y="30" width="460" height="223"
+			itemRenderer="com.airgit.view.renderer.RecentOpenItem"
+			dataProvider="{recentlyOpened}"
+			labelFunction="getLabel"
+			change="selectRepository(event)"
+			doubleClickEnabled="true"
+			doubleClick="loadRepository(repository)"
+			/>
+</s:WindowedApplication>
