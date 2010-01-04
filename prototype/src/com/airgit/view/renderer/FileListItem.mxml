@@ -16,6 +16,9 @@
 
 			protected function dataChangeHandler(event:FlexEvent):void
 			{
+				if(!data || !(data is FileStatus)){
+					return;
+				}
 				// TODO Auto-generated method stub
 				var status:FileStatus = data as FileStatus;
 				if(status.status == FileStatus.UNTRACKED){

@@ -39,6 +39,7 @@
 
 				var col:ArrayCollection = model.fileStatus.all;
 				col.sort = listSort;
+				col.filterFunction = fileListFilterFunction;
 				col.refresh();
 				fileDP = col;
 			}
@@ -48,6 +49,21 @@
 				// TODO Auto-generated method stub
 				NativeApplication.nativeApplication.exit();
 			}
+			
+			protected function fileListFilterFunction(item:Object):Boolean {
+				if(!treeBrowser.selectedItem){
+					return true; // when nothing is selected we show everything
+				}
+				
+				for each(var path:String in treeBrowser.selectedPaths){					
+					if(FileStatus(item).reference.nativePath.indexOf(path) == 0){ // if the item's path starts with the selected path
+						return true; // then its in
+					}
+				}
+				
+				// if the item doesn't match any of the selected paths
+				return false; // then its out
+			}
 
 		]]>
 	</fx:Script>
@@ -55,7 +71,7 @@
 	</fx:Declarations>
 	<mx:VDividedBox width="100%" height="100%">
 		<mx:HDividedBox width="100%" height="70%">
-			<mx:FileSystemTree id="treeBrowser" width="30%" height="100%" directory="{model.repositoryDirectory}"/>
+			<mx:FileSystemTree id="treeBrowser" width="30%" height="100%" directory="{model.repositoryDirectory}" itemClick="fileDP.refresh()"/>
 			<s:List width="70%" height="100%"
 					itemRenderer="com.airgit.view.renderer.FileListItem"
 					dataProvider="{fileDP}"
