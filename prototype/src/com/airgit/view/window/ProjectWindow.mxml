@@ -64,14 +64,26 @@
 				// if the item doesn't match any of the selected paths
 				return false; // then its out
 			}
-
+			
+			protected function directoryFilterFunction(item:Object):Boolean {
+				return File(item).nativePath.indexOf(model.repositoryDirectory.nativePath) == 0;
+			}
+			
+			protected function setupFileSystemTree():void {				
+				treeBrowser.openPaths = [model.repositoryDirectory.nativePath];
+				treeBrowser.selectedPath = model.repositoryDirectory.nativePath;
+			}
 		]]>
 	</fx:Script>
 	<fx:Declarations>
 	</fx:Declarations>
 	<mx:VDividedBox width="100%" height="100%">
 		<mx:HDividedBox width="100%" height="70%">
-			<mx:FileSystemTree id="treeBrowser" width="30%" height="100%" directory="{model.repositoryDirectory}" itemClick="fileDP.refresh()"/>
+			<mx:FileSystemTree id="treeBrowser" width="30%" height="100%" 
+							   directory="{model.repositoryDirectory.parent}" 
+							   itemClick="fileDP.refresh()" 
+							   filterFunction="{directoryFilterFunction}"
+							   creationComplete="setupFileSystemTree()"/>
 			<s:List width="70%" height="100%"
 					itemRenderer="com.airgit.view.renderer.FileListItem"
 					dataProvider="{fileDP}"
