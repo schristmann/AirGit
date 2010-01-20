@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TreeItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					 xmlns:s="library://ns.adobe.com/flex/spark" 
+					 xmlns:mx="library://ns.adobe.com/flex/halo"
+					 dataChange="dataChangeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.airgit.model.FileStatus;
+			
+			import flash.display.GradientType;
+			import flash.display.Sprite;
+			import flash.events.Event;
+			import flash.events.MouseEvent;
+			import flash.geom.Matrix;
+			import flash.text.TextField;
+			
+			import mx.controls.Tree;
+			import mx.controls.treeClasses.TreeListData;
+			import mx.events.FlexEvent;
+			
+			private var padding:Number = 2;
+			private var selected:Boolean = false;
+			private var button:Sprite;
+			private var buttonText:TextField;
+			protected function dataChangeHandler(event:FlexEvent):void
+			{
+			}
+			
+			override protected function updateDisplayList(unscaledWidth:Number,
+														  unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				var color:uint = 0xFFFFFF;
+				if(data){
+					if(data.status == FileStatus.UNTRACKED){
+						color = 0xFFBBBB;
+					}else if(data.status == FileStatus.MODIFIED){
+						color = 0xBBFFBB;
+					}else if(data.status == FileStatus.UNCOMMITED){
+						color = 0xBBBBFF;
+					}
+				}
+				var treeData:TreeListData = listData as TreeListData;
+				if(button != null){
+					button.visible = false;
+					buttonText.visible = false;
+				}
+				if(treeData){
+					var listOwner:Tree = Tree(treeData.owner);
+					
+					if(treeData.hasChildren){
+						icon.visible = false;
+						label.x = 15;
+						label.y = 2;
+						graphics.clear();
+						graphics.beginFill(color);
+						graphics.drawRect(-padding, -padding, unscaledWidth+(padding*2), unscaledHeight+(padding*2));
+						var matr:Matrix = new Matrix();
+						matr.createGradientBox( unscaledWidth+(padding*2), unscaledHeight+(padding*2)-1, Math.PI/2, 0, -padding );
+						graphics.beginGradientFill(GradientType.LINEAR, [0xFFFFFF, 0xFFFFFF, 0x000000, 0x000000], [0.6, 0.1, 0.1, 0.6], [0, 30, 225, 255], matr);
+						graphics.drawRect(-padding, -padding, unscaledWidth+(padding*2), unscaledHeight+(padding*2));
+						if(data.status == FileStatus.UNCOMMITED){
+							if(button == null){
+								button = new Sprite();
+								button.useHandCursor = true;
+								button.buttonMode = true;
+								button.addEventListener(MouseEvent.CLICK, commitFiles);
+								button.graphics.lineStyle(2, 0x000000, 0.6);
+								button.graphics.beginFill(0x000000, 0.1);
+								button.graphics.drawRoundRect(0, 0, 66, 18, 7, 7);
+								buttonText = new TextField();
+								buttonText.text = "Commit All";
+								buttonText.selectable = false;
+								buttonText.mouseEnabled = false;
+								addChild(button);
+								addChild(buttonText);
+							}
+							button.visible = true;
+							buttonText.visible = true;
+							button.x = unscaledWidth-68;
+							buttonText.x = unscaledWidth-65;
+							buttonText.y = 2;
+						}
+					}else{
+						
+						label.y = 2;
+						graphics.clear();
+						graphics.beginFill(color);
+						graphics.drawRect(-padding, -padding, unscaledWidth+(padding*2), unscaledHeight+(padding*2));
+						if (listOwner.isItemSelected(listData.uid)){
+							graphics.beginFill(0x000000, 0.5);
+							graphics.drawRect(-padding, -padding, unscaledWidth+(padding*2), unscaledHeight+(padding*2));
+						}
+						graphics.beginFill(0x000000, 0.2);
+						graphics.drawRect(-padding, unscaledHeight+(padding*2)-3, unscaledWidth+(padding*2), 1);
+						
+					}
+				}
+			}
+			private function commitFiles(evt:MouseEvent):void {
+				dispatchEvent(new Event("commit", true));
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</mx:TreeItemRenderer>

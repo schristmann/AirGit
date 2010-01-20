@@ -5,8 +5,8 @@
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-	<s:Button x="237" y="9" label="Pull" width="43"/>
-	<mx:ComboBox x="69" y="10" editable="true"></mx:ComboBox>
+	<s:Button x="197" y="9" label="Pull" width="43"/>
+	<mx:ComboBox x="69" y="10" editable="true" width="115"></mx:ComboBox>
 	<s:Label x="10" y="14" text="Pull From:"/>
-	<mx:VRule x="291" y="5" height="30"/>
+	<mx:VRule x="251" y="5" height="30"/>
 </s:Group>
