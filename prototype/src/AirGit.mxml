@@ -9,6 +9,7 @@
 		<![CDATA[
 			import com.airgit.model.ProjectModel;
 			import com.airgit.model.cache.RecentlyOpened;
+			import com.airgit.util.AIRUtil;
 			import com.airgit.util.Git;
 			import com.airgit.view.window.ProjectWindow;
 			
@@ -25,6 +26,7 @@
 			private var repository:File;
 
 			protected function startApp(event:FlexEvent):void {
+				AIRUtil.centerWindow(this);
 				recentlyOpened = RecentlyOpened.getRecentDirectories();
 			}
 
