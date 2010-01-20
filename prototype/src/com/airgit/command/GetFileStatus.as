@@ -15,6 +15,7 @@ package com.airgit.command
 		public var model:ProjectModel;
 		private var git:Git;
 		private var allFiles:Array;
+		private var state:ParseState;
 		
 		public function GetFileStatus(){
 			allFiles = [];
@@ -47,33 +48,25 @@ package com.airgit.command
 			git.execute("status");
 		}
 		private function parseStatus(event:Event):void{
-			trace(git.response);
+			//trace(git.response);
 			var parse:String = git.response;
-			var states:Array = [];
-			
-			var idx:int = 0;
-			var edx:int = 0;
-			var pattern:String = "#\t";
-			while(idx > -1){
-				idx = parse.indexOf(pattern, edx);
-				if(idx > -1){
-					edx = parse.indexOf("\n", idx);
-					states.push(parse.substring(idx+pattern.length, edx));
-				}
-			}
-			//trace(states.join("\n"));
-			var path:String;
-			for each(var state:String in states){
-				var modified:Boolean = state.indexOf("modified:") == 0;
-				if(modified){
-					path = state.substr(12);
-					moveFileToStatus(path, FileStatus.MODIFIED);
+			var lines:Array = parse.split("\n");
+			for each(var line:String in lines){
+				if(line.indexOf("#\t") > -1){
+					parseFile(line);
 				}else{
-					path = state;
-					if(path.charAt(path.length-1) == "/"){
-						moveDirectoryToStatus(path, FileStatus.UNTRACKED);
-					}else{
-						moveFileToStatus(path, FileStatus.UNTRACKED);
+					switch(line){
+						case "# Changes to be committed:":
+							state = ParseState.UNCOMMITTED;
+							break;
+						case "# Changed but not updated:":
+							state = ParseState.MODIFIED;
+							break;
+						case "# Untracked files:":
+							state = ParseState.UNTRACKED;
+							break;
+						default:
+							break;
 					}
 				}
 			}
@@ -84,12 +77,29 @@ package com.airgit.command
 			}
 			model.fileStatus.all = new ArrayCollection(allFiles);
 			dispatchEvent(new Event(Event.COMPLETE));
+			
+		}
+		private function parseFile(line:String):void {
+			var idx:int = line.indexOf(":");
+			var path:String;
+			if(idx > -1){
+			 	path = line.substr(idx+4);
+			}else{
+				path = line.substr(2);
+			}
+			if(path.charAt(path.length-1) == "/"){
+				moveDirectoryToStatus(path, state.status);
+			}else{
+				moveFileToStatus(path, state.status);
+			}
 		}
 		
 		private function moveFileToStatus(path:String, state:int):void{
 			for each(var st:FileStatus in allFiles){
 				if(st.rootPath == path){
-					st.status = state;
+					if(st.status == FileStatus.UNKNOWN){
+						st.status = state;
+					}
 					break;
 				}
 			}
@@ -101,5 +111,15 @@ package com.airgit.command
 				}
 			}
 		}
+	}
+}
+import com.airgit.model.FileStatus;
+class ParseState{
+	public static var UNCOMMITTED:ParseState = new ParseState(FileStatus.UNCOMMITED);
+	public static var MODIFIED:ParseState = new ParseState(FileStatus.MODIFIED);
+	public static var UNTRACKED:ParseState = new ParseState(FileStatus.UNTRACKED);
+	public var status:int;
+	public function ParseState(fileStatus:int){
+		status = fileStatus;
 	}
 }

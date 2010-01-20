@@ -4,10 +4,11 @@ package com.airgit.model
 
 	public class FileStatus
 	{
-		public static const TRACKED:int = 3;
-		public static const UNTRACKED:int = 1;
-		public static const MODIFIED:int = 2;
-		public static const UNRESOLVED:int = 0;
+		public static const UNCOMMITED:int = 0;
+		public static const TRACKED:int = 4;
+		public static const UNTRACKED:int = 2;
+		public static const MODIFIED:int = 3;
+		public static const UNRESOLVED:int = 1;
 		public static const UNKNOWN:int = -1;
 		
 		public var reference:File;
