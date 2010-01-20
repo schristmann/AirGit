@@ -1,5 +1,7 @@
 package com.airgit.util
 {
+	import com.airgit.model.Console;
+	
 	import flash.desktop.NativeProcess;
 	import flash.desktop.NativeProcessStartupInfo;
 	import flash.events.Event;
@@ -34,6 +36,9 @@ package com.airgit.util
 		private var repository:String;
 		private var process:NativeProcess;
 		public var response:String;
+		public var error:String;
+		private var commandString:String;
+		private var console:Console = Console.getInstance();
 		
 		public function Git(repodir:String) {
 			this.repository = repodir;
@@ -46,6 +51,7 @@ package com.airgit.util
 		}
 		public function execute(command:String):void {
 			response = "";
+			error = "";
 			if(!process.running){
 				var nativeProcessStartupInfo:NativeProcessStartupInfo = new NativeProcessStartupInfo();
 				nativeProcessStartupInfo.executable = getShell();
@@ -55,18 +61,36 @@ package com.airgit.util
 					command
 				];
 				process.start(nativeProcessStartupInfo);
+				commandString = command;
+			}
+			
+		}
+		public function executeArguments(commands:Vector.<String>):void {
+			response = "";
+			error = "";
+			if(!process.running){
+				var nativeProcessStartupInfo:NativeProcessStartupInfo = new NativeProcessStartupInfo();
+				nativeProcessStartupInfo.executable = getShell();
+				nativeProcessStartupInfo.arguments = new <String>[
+					"--git-dir="+repository+".git",
+					"--work-tree="+repository
+				];
+				nativeProcessStartupInfo.arguments = nativeProcessStartupInfo.arguments.concat(commands);
+				process.start(nativeProcessStartupInfo);
+				commandString = commands.join(" ");
 			}
 		}
 		private function captureSTDIO(event:ProgressEvent):void{
 			response += process.standardOutput.readUTFBytes(process.standardOutput.bytesAvailable);
 		}
 		private function captureSTDERR(event:ProgressEvent):void{
-			trace("STDIO ERR", process.standardError.readUTFBytes(process.standardError.bytesAvailable));
+			error += process.standardError.readUTFBytes(process.standardError.bytesAvailable);
 		}
 		public function onIOError(event:IOErrorEvent):void{
 			trace(event.toString());
 		}
 		public function onExit(event:NativeProcessExitEvent):void{
+			console.console = commandString+"\n"+response+error+"\n"+console.console;
 			var complete:Event = new Event(Event.COMPLETE);
 			dispatchEvent(complete);
 		}

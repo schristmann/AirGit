@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		 xmlns:s="library://ns.adobe.com/flex/spark" 
-		 xmlns:mx="library://ns.adobe.com/flex/halo" width="400" height="300">
+		 xmlns:mx="library://ns.adobe.com/flex/halo" width="600" height="100">
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-	<s:Button x="10" y="10" label="Pull Updates"/>
+	<s:Button x="237" y="9" label="Pull" width="43"/>
+	<mx:ComboBox x="69" y="10" editable="true"></mx:ComboBox>
+	<s:Label x="10" y="14" text="Pull From:"/>
+	<mx:VRule x="291" y="5" height="30"/>
 </s:Group>
