@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		 xmlns:s="library://ns.adobe.com/flex/spark" 
-		 xmlns:mx="library://ns.adobe.com/flex/halo" width="600" height="100">
+		 xmlns:mx="library://ns.adobe.com/flex/halo" width="800" height="88">
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
-	<s:Button x="197" y="9" label="Pull" width="43"/>
-	<mx:ComboBox x="69" y="10" editable="true" width="115"></mx:ComboBox>
-	<s:Label x="10" y="14" text="Pull From:"/>
-	<mx:VRule x="251" y="5" height="30"/>
+	<s:Button x="477" y="57" label="Pull" width="43"/>
+	<mx:ComboBox x="349" y="58" editable="true" width="115"></mx:ComboBox>
+	<mx:ComboBox x="533" y="13" editable="true" width="115"></mx:ComboBox>
+	<s:Label x="11" y="19" text="BRANCHING &gt;"/>
+	<s:Label x="290" y="61" text="Pull From:"/>
+	<mx:VRule x="531" y="52" height="30"/>
+	<mx:VRule x="659" y="7" height="30"/>
+	<mx:ComboBox x="597" y="58" editable="true" width="115"></mx:ComboBox>
+	<s:Label x="544" y="61" text="Push To:"/>
+	<s:Button x="722" y="57" label="Push" width="56"/>
+	<s:Button x="7" y="51" label="Refresh" height="30" width="70"/>
+	<mx:HRule y="44" left="7" right="7"/>
+	<s:Label x="106" y="19" text="Currently working on 'master' branch"/>
 </s:Group>

@@ -19,7 +19,8 @@ package com.airgit.util
 			if(!shell){
 				var knownShells:Array = [
 					"/opt/local/bin/git",
-					"/usr/local/git/bin/git"
+					"/usr/local/git/bin/git",
+					"/usr/local/bin/git"
 				];
 				for each(var loc:String in knownShells){
 					var fil:File = new File(loc);
