@@ -2,29 +2,54 @@
 <s:Window xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/halo"
-		  creationComplete="creationCompleteHandler(event)" 
-		  close="closeHandler(event)">
+		  visible="false"
+		  creationComplete="creationCompleteHandler(event)"
+		  closing="closingHandler(event)"
+		  close="closeHandler(event)" xmlns:view="com.airgit.view.*">
 	<fx:Script>
 		<![CDATA[
+			import com.airgit.command.AddFiles;
 			import com.airgit.command.GetFileStatus;
+			import com.airgit.command.UnCommitFiles;
+			import com.airgit.model.Console;
 			import com.airgit.model.FileStatus;
 			import com.airgit.model.ProjectModel;
+			import com.airgit.util.AIRUtil;
+			import com.airgit.view.Commit;
 			
+			import flash.display.NativeMenu;
 			import flash.events.Event;
 			
 			import mx.collections.ArrayCollection;
 			import mx.collections.Sort;
 			import mx.collections.SortField;
 			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.utils.ArrayUtil;
 			
 			[Bindable]
 			public var model:ProjectModel;
 			[Bindable]
 			private var fileDP:ArrayCollection;
+			[Bindable]
+			private var treeDP:ArrayCollection;
+			private var commitWindow:Commit;
 
 			protected function creationCompleteHandler(event:FlexEvent):void
 			{
-				// TODO Auto-generated method stub
+				AIRUtil.loadWindowPrefs(this);
+				AIRUtil.centerWindow(this);
+				visible = true;
+				
+				activate();
+				statusTreeOptions = new NativeMenu();
+				statusTreeOptions.addEventListener(Event.SELECT, executeTreeAction);
+				statusTree.contextMenu = statusTreeOptions;
+				statusTree.addEventListener("commit", commitFiles);
+				populateList();
+				//this.setFocus();
+			}
+			protected function populateList(evt:Event=null):void {
 				var populateFiles:GetFileStatus = new GetFileStatus();
 				populateFiles.model = model;
 				populateFiles.addEventListener(Event.COMPLETE, fillList);
@@ -42,11 +67,35 @@
 				col.filterFunction = fileListFilterFunction;
 				col.refresh();
 				fileDP = col;
+				treeDP = model.fileStatus.treeCollection;
+				var openItems:Array = [];
+				for(var i:int=0; i<treeDP.length; i++){
+					var obj:Object = treeDP.getItemAt(i);
+					if(obj.status == FileStatus.UNCOMMITED || obj.status == FileStatus.MODIFIED || obj.status == FileStatus.UNTRACKED){
+						openItems.push(obj);
+					}
+				}
+				statusTree.openItems = openItems;
 			}
-
+			protected function commitFiles(evt:Event):void {
+				trace("commit");
+				commitWindow = new Commit();
+				commitWindow.model = model;
+				commitWindow.horizontalCenter = 0;
+				commitWindow.verticalCenter = 0;
+				commitWindow.addEventListener(Event.COMPLETE, commitComplete);
+				commitWindow.addEventListener(Event.CANCEL, commitComplete);
+				addElement(commitWindow);
+			}
+			protected function commitComplete(evt:Event):void {
+				if(evt.type == Event.COMPLETE){
+					populateList();
+				}
+				removeElement(commitWindow);
+				commitWindow = null;
+			}
 			protected function closeHandler(event:Event):void
 			{
-				// TODO Auto-generated method stub
 				NativeApplication.nativeApplication.exit();
 			}
 			
@@ -73,22 +122,139 @@
 				treeBrowser.openPaths = [model.repositoryDirectory.nativePath];
 				treeBrowser.selectedPath = model.repositoryDirectory.nativePath;
 			}
+
+			protected function closingHandler(event:Event):void
+			{
+				AIRUtil.saveWindowPrefs(this);
+			}
+			protected var actionFiles:Array;
+			protected var statusTreeOptions:NativeMenu;
+			protected function statusTree_changeHandler(event:ListEvent):void
+			{
+				
+				var commandList:Array;
+				var untrackedFile:Array = ["Add File", "Delete File"];
+				var modifiedFile:Array = ["Add File", "Revert Changes", "Delete File"];
+				var untrackedFiles:Array = ["Add Files", "Delete Files"];
+				var modifiedFiles:Array = ["Add Files", "Revert Changes", "Delete Files"];
+				var untrackedOrModified:Array = ["Add Files", "Delete Files"];
+				var uncommitedFile:Array = ["Uncommit File", "Delete Files"];
+				var uncommitedFiles:Array = ["Uncommit Files", "Delete Files"];
+				var allStatus:Array = getAllStatus();
+				if(statusTree.selectedItems.length == 1){
+					var status:int = allStatus[0];
+					switch(status){
+						case FileStatus.UNTRACKED :
+							commandList = untrackedFile;
+							break;
+						case FileStatus.MODIFIED :
+							commandList = modifiedFile;
+							break;
+						case FileStatus.UNCOMMITED :
+							commandList = uncommitedFile;
+							break;
+						default :
+							break;
+					}
+				}else{
+					if(allStatus.length == 1){
+						var status:int = allStatus[0];
+						switch(status){
+							case FileStatus.UNTRACKED :
+								commandList = untrackedFiles;
+								break;
+							case FileStatus.MODIFIED :
+								commandList = modifiedFiles;
+								break;
+							case FileStatus.UNCOMMITED :
+								commandList = uncommitedFiles;
+								break;
+							default :
+								break;
+						}
+					}else if(allStatus.length == 2){
+						var mod:Boolean = ArrayUtil.getItemIndex(FileStatus.MODIFIED, allStatus) > -1;
+						var untrack:Boolean = ArrayUtil.getItemIndex(FileStatus.UNTRACKED, allStatus) > -1;
+						if(mod && untrack){
+							commandList = untrackedOrModified;
+						}
+					}
+				}
+				var items:Array = [];
+				for each(var command:String in commandList){
+					var menu:NativeMenuItem = new NativeMenuItem(command);
+					items.push(menu);
+				}
+				statusTreeOptions.items = items;
+			}
+			protected function getAllStatus():Array{
+				actionFiles = [];
+				var output:Array = [];
+				var status:Object;
+				for each (status in statusTree.selectedItems){
+					if(status is FileStatus){
+						actionFiles.push(status);
+						if(ArrayUtil.getItemIndex(status.status, output) == -1){
+							output.push(status.status);
+						}
+					}
+				}
+				return output;
+			}
+			protected function executeTreeAction(evt:Event):void {
+				var menuItem:NativeMenuItem = evt.target as NativeMenuItem;
+				switch(menuItem.label){
+					case "Add File" :
+						var action:AddFiles = new AddFiles();
+						action.model = model;
+						action.addEventListener(Event.COMPLETE, populateList);
+						action.execute(actionFiles);
+						break;
+					case "Add Files" :
+						var action:AddFiles = new AddFiles();
+						action.model = model;
+						action.addEventListener(Event.COMPLETE, populateList);
+						action.execute(actionFiles);
+						break;
+					case "Uncommit File" :
+						var undo:UnCommitFiles = new UnCommitFiles();
+						undo.model = model;
+						undo.addEventListener(Event.COMPLETE, populateList);
+						undo.execute(actionFiles);
+						break;
+					case "Uncommit Files" :
+						var undo:UnCommitFiles = new UnCommitFiles();
+						undo.model = model;
+						undo.addEventListener(Event.COMPLETE, populateList);
+						undo.execute(actionFiles);
+						break;
+					default :
+						break;
+				}
+			}
 		]]>
 	</fx:Script>
 	<fx:Declarations>
 	</fx:Declarations>
-	<mx:VDividedBox width="100%" height="100%">
-		<mx:HDividedBox width="100%" height="70%">
-			<mx:FileSystemTree id="treeBrowser" width="30%" height="100%" 
+	<view:ProjectToolbar width="100%"/>
+	<mx:VDividedBox width="100%" height="100%" top="44">
+		<mx:HDividedBox width="100%" height="100%">
+			<mx:FileSystemTree id="treeBrowser" width="200" height="100%" 
 							   directory="{model.repositoryDirectory.parent}" 
 							   itemClick="fileDP.refresh()" 
 							   filterFunction="{directoryFilterFunction}"
 							   creationComplete="setupFileSystemTree()"/>
-			<s:List width="70%" height="100%"
+			<!--<s:List width="70%" height="100%"
 					itemRenderer="com.airgit.view.renderer.FileListItem"
 					dataProvider="{fileDP}"
-					/>
+					/>-->
+			<mx:Tree id="statusTree" width="100%" height="100%"
+					 allowMultipleSelection="true"
+					 itemRenderer="com.airgit.view.renderer.StatusTreeItem"
+					 dataProvider="{treeDP}"
+					 change="statusTree_changeHandler(event)"
+					 />
 		</mx:HDividedBox>
-		<s:TextArea width="100%" height="30%" text="{model.console}"/>
+		<s:TextArea width="100%" height="150" text="{Console.getInstance().console}"/>
 	</mx:VDividedBox>
 </s:Window>

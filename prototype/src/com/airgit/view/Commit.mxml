@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Panel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/halo" width="400" height="400" title="Commit to branch 'master'" creationComplete="creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import com.airgit.command.CommitFiles;
+			import com.airgit.model.ProjectModel;
+			
+			import flash.events.Event;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			
+			[Bindable]
+			private var fileList:ArrayCollection;
+			[Bindable]
+			public var model:ProjectModel;
+
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				fileList = model.fileStatus.unCommittedCollection;
+			}
+			protected function commitFiles():void {
+				var commiter:CommitFiles = new CommitFiles();
+				commiter.model = model;
+				commiter.addEventListener(Event.COMPLETE, commitComplete);
+				commiter.execute(commitMessage.text);
+			}
+			protected function commitComplete(evt:Event):void {
+				dispatchEvent(new Event(Event.COMPLETE));
+			}
+			protected function cancel():void {
+				dispatchEvent(new Event(Event.CANCEL));
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:TextArea y="215" height="114" left="10" right="10" id="commitMessage"/>
+	<s:Button x="240" y="337" label="Commit" id="commitBtn" click="commitFiles()"/>
+	<s:Button x="318" y="337" label="Cancel" id="cancelBtn" click="cancel()"/>
+	<s:List height="176" left="10" right="10" top="10" dataProvider="{fileList}"></s:List>
+	<s:Label x="10" y="202" text="Enter a commit message"/>
+</s:Panel>
